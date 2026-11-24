@@ -1,0 +1,36 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "npm run build",
+  "fluid": true,
+  "functions": {
+    "api/index.js": {
+      "maxDuration": 300
+    },
+    "api/socket-io.js": {
+      "maxDuration": 800
+    },
+    "api/queue.js": {
+      "maxDuration": 300,
+      "experimentalTriggers": [
+        {
+          "type": "queue/v2beta",
+          "topic": "quiz-jobs"
+        }
+      ]
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/api/socket-io/(.*)",
+      "destination": "/api/socket-io"
+    },
+    {
+      "source": "/api",
+      "destination": "/api/index"
+    },
+    {
+      "source": "/api/((?!socket-io(?:/|$)).*)",
+      "destination": "/api/index"
+    }
+  ]
+}

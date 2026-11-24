@@ -1,0 +1,50 @@
+{
+  "moduleFileExtensions": ["js", "json", "ts"],
+  "rootDir": "..",
+  "testEnvironment": "node",
+  "testRegex": ".e2e-spec.ts$",
+  "moduleNameMapper": {
+    "^(\\.{1,2}/.*)\\.js$": "$1"
+  },
+  "transform": {
+    "^.+\\.ts$": [
+      "ts-jest",
+      {
+        "tsconfig": "<rootDir>/tsconfig.json",
+        "diagnostics": { "ignoreCodes": [151002] }
+      }
+    ]
+  },
+  "maxWorkers": 1,
+  "testTimeout": 30000,
+  "collectCoverageFrom": [
+    "src/**/*.ts",
+    "!src/generated/**",
+    "!src/main.ts",
+    "!src/**/*.module.ts",
+    "!src/**/*.dto.ts",
+    "!src/**/*.spec.ts",
+    "!src/config/database.config.ts",
+    "!src/media/cloudinary.service.ts"
+  ],
+  "coverageDirectory": "coverage-e2e",
+  "coverageThreshold": {
+    "global": {
+      "statements": 65,
+      "branches": 50,
+      "functions": 65,
+      "lines": 68
+    },
+    "**/*.controller.ts": {
+      "statements": 90,
+      "functions": 90,
+      "lines": 90
+    },
+    "**/realtime.gateway.ts": {
+      "statements": 80,
+      "branches": 50,
+      "functions": 80,
+      "lines": 85
+    }
+  }
+}

@@ -1,0 +1,118 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: Backend (NestJS / Prisma)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: quiz
+          POSTGRES_PASSWORD: quiz
+          POSTGRES_DB: quiz_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U quiz -d quiz_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgresql://quiz:quiz@localhost:5432/quiz_test?schema=public
+      TEST_DATABASE_URL: postgresql://quiz:quiz@localhost:5432/quiz_test?schema=public
+      REDIS_URL: redis://localhost:6379
+      CLERK_SECRET_KEY: sk_test_dummy
+      ADMIN_EMAIL: admin@test.dev
+      CLOUDINARY_CLOUD_NAME: test-cloud
+      CLOUDINARY_API_KEY: test-key
+      CLOUDINARY_API_SECRET: test-secret
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma client
+        run: npx prisma generate
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Module boundaries
+        run: npm run lint:boundaries
+
+      - name: Unit tests with coverage thresholds
+        run: npm test -- --runInBand --coverage
+
+      - name: E2E tests with coverage thresholds
+        run: npm run test:e2e:cov
+
+      - name: Build
+        run: npm run build
+
+      - name: Upload coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-coverage
+          path: |
+            backend/coverage
+            backend/coverage-e2e
+          if-no-files-found: ignore
+
+  frontend:
+    name: Frontend (Vite / React)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build

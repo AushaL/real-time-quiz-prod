@@ -1,0 +1,60 @@
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  moduleFormat = "cjs"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum QuestionType {
+  text
+  image
+  audio
+}
+
+model Player {
+  id        String   @id @default(uuid())
+  clerkId   String   @unique
+  fullName  String
+  imageUrl  String   @default("")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("players")
+}
+
+model Quiz {
+  id          String     @id @default(uuid())
+  title       String
+  description String
+  difficulty  Int
+  variant     String
+  mode        String
+  questions   Question[]
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  @@index([difficulty])
+  @@index([mode])
+  @@map("quizzes")
+}
+
+model Question {
+  id                 String       @id @default(uuid())
+  quizId             String
+  quiz               Quiz         @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  position           Int
+  questionText       String
+  questionType       QuestionType
+  mediaUrl           String?
+  mediaPublicId      String?
+  options            String[]
+  correctAnswerIndex Int
+  explanation        String?
+
+  @@unique([quizId, position])
+  @@index([quizId])
+  @@map("questions")
+}
